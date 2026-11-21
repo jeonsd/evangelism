@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>하나님은 과연 살아 계신가?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f6e7b4;--panel:rgba(15,20,48,.55)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden;background:#0f1430;color:var(--ink);font-family:'Noto Serif KR','Batang','Apple SD Gothic Neo',serif;transition:color 2.5s}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:8vh 7vw 26vh;cursor:default}
+#txt{max-width:17em;text-align:center;font-size:clamp(24px,5.2vw,44px);line-height:1.65;opacity:0;transition:opacity .3s;word-break:keep-all}
+#txt.on{opacity:1}
+#txt.big{font-size:clamp(30px,7vw,58px);font-weight:600;line-height:1.5}
+#txt small{display:block;margin-top:1.4em;font-size:15px;opacity:.6;font-weight:400}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;background:rgba(15,20,48,.78);z-index:5}
+#start h1{font-size:clamp(28px,6vw,48px);font-weight:600;line-height:1.5;word-break:keep-all}
+#start p{font-size:18px;opacity:.8;margin-bottom:10px}
+#start.hide{display:none}
+button{font:inherit;color:inherit;background:var(--panel);border:1.5px solid currentColor;border-radius:999px;padding:12px 24px;min-height:52px;font-size:18px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#start button{min-width:min(86vw,320px);font-size:20px}
+button:focus-visible{outline:3px solid currentColor;outline-offset:3px}
+#ui{position:fixed;left:0;right:0;bottom:0;padding:0 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:14px;z-index:3}
+#dots{display:flex;gap:6px}
+#dots button{width:34px;height:34px;min-height:0;padding:0;border-width:1.5px;border-radius:50%;font-size:14px;opacity:.5;background:none}
+#dots button.cur{opacity:1;background:var(--panel)}
+#bar{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+@media(prefers-reduced-motion:reduce){#txt{transition:none}}
+.lk{display:block;margin:1.2em auto 0;font-size:.8em;color:inherit;font-weight:600}
+a.lk{text-decoration:underline}
+#more{position:fixed;inset:0;z-index:9;overflow:auto;padding:8vh 7vw;background:rgba(15,20,48,.95);color:#f6e7b4;line-height:1.8;font-size:19px}
+#more[hidden]{display:none}
+#more h2{margin:1.4em 0 .4em;font-size:1.2em}
+#mbox{max-width:34em;margin:0 auto}
+#mclose{display:block;margin:2em auto}
+.sub{display:block;margin-top:1em;font-size:.62em;font-weight:400;line-height:1.75;opacity:.9}
+.nosub .sub{display:none}
+#stage{overflow-y:auto}
+#txt{margin:auto}
+:root{--tp:rgba(10,14,36,.5)}
+#stage{align-items:flex-start;padding:6vh 5vw 24vh}
+#txt{margin:0 auto;max-width:22em;font-size:clamp(21px,4.2vw,38px);line-height:1.6;background:var(--tp);padding:.55em .9em;border-radius:20px;backdrop-filter:blur(3px)}
+#txt.big{font-size:clamp(26px,5.4vw,48px)}
+.nosub #txt{opacity:0!important}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div id="stage"><div id="txt"></div></div>
+<div id="more" hidden><div id="mbox"></div><button id="mclose">닫기</button></div>
+<div id="start">
+  <h1>하나님은 과연<br>살아 계신가?</h1>
+  <p>보시는 방법을 골라 주세요</p>
+  <button id="bAuto">처음부터 자동으로 보기</button>
+  <button id="bMan">한 컷씩 직접 넘기기</button>
+</div>
+<div id="ui" hidden>
+  <div id="dots" role="group" aria-label="장면 이동"></div>
+  <div id="bar">
+    <button id="prev" aria-label="이전 컷">이전</button>
+    <button id="play" aria-label="재생 또는 멈춤">멈춤</button>
+    <button id="next" aria-label="다음 컷">다음</button>
+    <button id="mode">직접 넘기기</button>
+    <button id="snd">소리 끄기</button>
+    <button id="cap">자막 끄기</button>
+  </div>
+</div>
+<script>
+(window.SC=window.SC||[])[0]={cuts:[
+{t:"밤하늘을 올려다본 적이 있으신가요?",n:"밤하늘을 가만히 올려다본 적이 있으신가요?"},
+{t:"끝없이 펼쳐진 별들 앞에서, 문득 이런 생각이 듭니다.",n:"끝없이 펼쳐진 별들 앞에 서면, 문득 이런 생각이 듭니다."},
+{t:"이 모든 것은 어디서 왔을까? 나는 왜 여기 있을까?",n:"이 모든 것은 어디서 왔을까? 그리고 나는, 왜 여기 있을까?"},
+{t:"몸과 마음이 힘들 때에도 같은 질문이 올라옵니다.",n:"몸과 마음이 몹시 힘든 때에도, 같은 질문이 마음속에서 올라옵니다."},
+{t:"믿는 사람도, 믿지 않는 사람도 이 질문을 피해 가지 못합니다.",n:"믿는 사람도, 믿지 않는 사람도, 이 질문만큼은 피해 가기 어렵습니다."},
+{t:"눈에 보이지 않는 분이기에, 무작정 믿으라고 하지는 않겠습니다.",n:"눈에 보이지 않는 분이기에, 저는 여러분께 무작정 믿으라고 말씀드리지 않겠습니다."},
+{t:"하나님은 과연 살아 계신가?",n:"하나님은, 과연 살아 계신가?",big:1,star:1},
+{t:"이 질문을 가볍게 넘기지 말고, 함께 차근차근 따라가 봅시다.",n:"이 질문을 가볍게 넘기지 말고, 함께 차근차근 따라가 보겠습니다."}
+]};
+
+</script><script>
+(window.SC=window.SC||[])[1]={cuts:[
+{t:"사람은 오래전부터 하늘을 보며 하나님을 생각해 왔습니다.",n:"사람은 아주 오래전부터, 하늘을 올려다보며 하나님을 생각해 왔습니다."},
+{t:"고대 그리스의 철학자들은 물었습니다. 세상은 무엇에서 시작되었는가?",n:"고대 그리스의 철학자들은 물었습니다. 이 세상은, 무엇에서 시작되었을까?"},
+{t:"플라톤은 보이는 세계 너머의 선한 질서를 생각했고, 아리스토텔레스는 모든 움직임의 첫 원인을 추론했습니다.",n:"플라톤은 눈에 보이는 세계 너머에 선한 질서가 있다고 보았고, 아리스토텔레스는 모든 움직임에는 첫 원인이 있어야 한다고 생각했습니다."},
+{t:"중세에는 신앙과 이성이 나란히 걸었습니다.",n:"중세의 신학자들, 안셀무스와 아퀴나스 같은 사람들은, 믿음을 가지고 이성으로 하나님을 깊이 생각했습니다."},
+{t:"근대에 이르러 이성은 더 큰 자신감을 얻었습니다.",n:"근대에 들어서면서 이성은 더 큰 자신감을 얻었고, 하나님에 대한 생각도 더 치밀해졌습니다. 그러나 한편에서는, 하나님을 의심하는 목소리도 커졌습니다."},
+{t:"오늘날 사람들은 묻습니다. 과학이 이렇게 발전했는데, 하나님이 정말 필요한가?",n:"오늘날 사람들은 묻습니다. 과학이 이렇게 발전했는데, 하나님이 정말 필요한가?"},
+{t:"그래도 사람들은 이성으로 하나님을 묻기를 멈추지 않았습니다.",n:"그래도 사람들은, 이성으로 하나님을 묻는 일을 멈추지 않았습니다."},
+{t:"그 길 위에서 사람들은 몇 가지 대표적인 논증을 내놓았습니다. 이제 직접 살펴보겠습니다.",n:"그 길 위에서 사람들은 몇 가지 대표적인 논증을 내놓았습니다. 이제 그것을, 직접 살펴보겠습니다."}
+]};
+
+</script><script>
+(window.SC=window.SC||[])[2]={cuts:[
+{t:"네 갈래의 길을 하나씩 따라가 봅시다.",n:"이제 네 갈래의 길을 하나씩, 직접 따라가 보겠습니다."},
+{t:"첫째 길: 모든 것의 처음을 묻습니다.",n:"첫 번째 길은, 모든 것의 처음을 묻는 길입니다.",big:1},
+{t:"세상 모든 것에는 원인이 있습니다.",n:"우리 주변의 모든 것에는, 그것이 있게 된 원인이 있습니다. 씨앗이 있어야 나무가 자라고, 부모가 있어야 내가 태어납니다."},
+{t:"그 원인에도 또 원인이 있습니다.",n:"그런데 그 원인에도 또 원인이 있고, 그 앞에도 또 다른 원인이 있습니다."},
+{t:"이 사슬이 끝없이 이어지기만 한다면, 아무것도 시작되지 못했을 것입니다.",n:"이 사슬이 끝없이 거슬러 올라가기만 한다면, 아무것도 시작되지 못했을 것입니다. 어딘가에는 처음이 있어야 합니다."},
+{t:"우주에도 시작이 있었다고 과학은 말합니다.",n:"오늘날 많은 과학자들은 우주 자체에도 시작이 있었다고 말합니다. 그렇다면 우주는, 그 시작을 어디서 얻었을까요?"},
+{t:"처음 원인은 스스로 계시면서 모든 것을 있게 한 분이어야 합니다.",n:"그 처음 원인은, 다른 무엇에도 원인을 두지 않고 스스로 계시면서, 모든 것을 있게 한 분이어야 합니다. 사람들은 그분을 하나님이라고 불러 왔습니다."},
+{t:"그러면 하나님은 누가 만들었느냐고 물을 수 있습니다.",n:"그러면 하나님은 누가 만드셨느냐고 물을 수 있습니다. 그러나 스스로 계신 분이라는 말은, 만들어진 분이 아니라는 뜻입니다."},
+{t:"이 길은 처음 원인이 있어야 한다는 데까지 우리를 데려다 줍니다.",n:"이 길은 우리를, 처음 원인이 있어야 한다는 데까지 데려다 줍니다. 그 너머는 아직 알 수 없습니다."},
+{t:"둘째 길: 세상의 질서와 설계를 묻습니다.",n:"두 번째 길은, 이 세상의 질서와 설계를 묻는 길입니다.",big:1},
+{t:"길에서 시계 하나를 주웠다고 해 봅시다.",n:"길을 걷다가 시계 하나를 주웠다고 해 봅시다. 톱니바퀴들이 정확하게 맞물려 시간을 알려 줍니다."},
+{t:"그 시계가 저절로 생겼다고 생각하는 사람은 없습니다.",n:"그 시계가 우연히 저절로 생겼다고 생각하는 사람은 없을 것입니다. 우리는 자연스럽게, 만든 사람이 있다고 생각합니다."},
+{t:"그런데 자연은 시계보다 훨씬 정교합니다.",n:"그런데 자연은 시계보다 훨씬 더 정교합니다. 눈은 빛을 받아 세상을 보게 하고, 몸의 세포 하나에는 엄청난 정보가 담겨 있습니다."},
+{t:"우주의 법칙도 놀랍도록 정밀하게 맞추어져 있습니다.",n:"우주의 법칙도 놀랍도록 정밀하게 맞추어져 있습니다. 중력이나 빛의 속도 같은 값이 조금만 달랐어도 별도 생명도 생기지 못했을 것이라고 말하는 과학자들이 있습니다."},
+{t:"질서와 목적이 보이는 곳에는 설계한 분이 있다고 보는 것이 자연스럽습니다.",n:"이렇게 질서와 목적이 보이는 곳에는, 설계한 분이 계시다고 보는 것이 가장 자연스러운 생각입니다."},
+{t:"자연의 법칙만으로 설명할 수 있다고 하는 분도 있습니다.",n:"물론 자연의 법칙만으로 설명할 수 있다고 하는 분도 있습니다. 그러나 그 법칙이 왜 그렇게 정밀한지는, 여전히 남는 질문입니다."},
+{t:"이 길은 설계한 분이 계시다는 데까지 우리를 데려다 줍니다.",n:"이 길은 우리를, 설계한 분이 계시다는 데까지 데려다 줍니다. 그분이 어떤 분인지는, 아직 알 수 없습니다."},
+{t:"성경도 같은 말을 합니다. 하늘과 만물이 창조하신 분을 드러낸다고요. (시편 19편, 로마서 1장)",n:"성경도 같은 말을 합니다. 하늘과 만물이 창조하신 분을 드러내고 있다고 말합니다."},
+{t:"셋째 길: 내 마음속의 옳고 그름을 묻습니다.",n:"세 번째 길은, 우리 마음속의 옳고 그름을 묻는 길입니다.",big:1},
+{t:"누가 가르치지 않아도 잘못이라고 느끼는 일이 있습니다.",n:"죄 없는 사람을 괴롭히거나, 약한 사람의 것을 빼앗는 일은, 누가 가르쳐 주지 않아도 잘못이라고 느낍니다."},
+{t:"시대와 나라가 달라도 이 기준은 놀랍도록 닮아 있습니다.",n:"시대와 나라가 달라도 이 마음의 기준은 놀랍도록 많이 닮아 있습니다. 거짓과 배신과 잔인함은 어디서나 비난받고, 정직과 사랑과 용기는 어디서나 존경받습니다."},
+{t:"억울할 때 우리는 외칩니다. ‘이건 옳지 않아!’",n:"억울한 일을 당하면 우리는 외칩니다. 이건 옳지 않다고요. 그것은 내 취향이 아니라, 모두에게 적용되어야 할 기준이 있다고 믿기 때문입니다."},
+{t:"그렇다면 이 기준은 어디서 왔을까요?",n:"그렇다면 이 기준은 어디서 왔을까요? 나보다 앞서고, 나를 넘어서는 이 옳고 그름의 기준은, 누가 정한 것일까요?"},
+{t:"사회가 약속으로 만든 것이라고 말하는 분도 있습니다.",n:"사회가 약속으로 만든 것이라고 말하는 분도 있습니다. 그러나 그렇다면, 한 사회 전체가 저지르는 잘못은 아무도 잘못이라고 말할 수 없게 됩니다."},
+{t:"옳고 그름이 모두에게 적용되는 기준이라면, 그 뿌리에는 선하신 분이 계십니다.",n:"옳고 그름이 정말로 모두에게 적용되는 기준이라면, 그 뿌리에는 선하고 의로우신 분이 계시다고 보는 것이 자연스럽습니다."},
+{t:"이 길은 선하고 의로우신 분이 계시다는 데까지 우리를 데려다 줍니다.",n:"이 길은 우리를, 선하고 의로우신 분이 계시다는 데까지 데려다 줍니다. 그분이 어떤 분인지 다 알 수는 없습니다."},
+{t:"그런데 나는 그 기준대로 살고 있습니까?",n:"그런데 한 가지 질문이 남습니다. 나는, 그 기준대로 살고 있을까요?"},
+{t:"넷째 길: 생각 속의 가장 위대한 존재를 묻습니다.",n:"마지막 네 번째 길은, 우리의 생각 속에서 가장 위대한 존재를 묻는 길입니다.",big:1},
+{t:"생각할 수 있는 가장 위대한 존재를 떠올려 보세요.",n:"생각할 수 있는 가장 위대한 존재를 한번 떠올려 보세요. 그보다 더 위대한 존재는 생각할 수 없는 분입니다."},
+{t:"그런데 그 존재가 머릿속에만 있다면 어떨까요?",n:"그런데 그 존재가 머릿속에만 있고 실제로는 없다면, 어떨까요? 실제로도 계신 분이 더 위대하지 않겠습니까? 그렇다면 머릿속에만 있는 존재는, 가장 위대한 존재가 아닙니다."},
+{t:"그러므로 가장 위대한 존재라면, 실제로도 계셔야 합니다.",n:"그러므로 가장 위대한 존재라면, 반드시 실제로도 계셔야 한다는 것이 이 논증의 주장입니다."},
+{t:"이 길은 가장 추상적이어서 철학자들 사이에서도 의견이 갈립니다.",n:"이 길은 네 가지 길 가운데 가장 추상적이어서, 철학자들 사이에서도 의견이 갈립니다. 그래도 사람들이 이 질문을 오랫동안 붙들어 왔다는 것은, 눈여겨볼 만합니다."},
+{t:"네 갈래의 길은 모두, 한 분을 가리킵니다. 그런데 이성은 어디까지 갈 수 있을까요?",n:"네 갈래의 길은 모두, 한 분을 가리키는 듯합니다. 모든 것의 처음이시고, 질서를 세우시고, 선하고 의로우신 분입니다. 그런데 이성은, 과연 어디까지 갈 수 있을까요?"}
+]};
+
+</script><script>
+(window.SC=window.SC||[])[3]={cuts:[
+{t:"이성은 놀라운 선물입니다.",n:"이성은 놀라운 선물입니다. 사람은 이성으로 달에 가고, 병을 고치고, 우주의 법칙을 밝혀 냈습니다."},
+{t:"이성은 하나님이 계실 수 있다는 방향도 분명히 가리킵니다.",n:"앞에서 본 네 갈래의 길처럼, 이성은 하나님이 계실 수 있다는 방향을 분명히 가리켜 줍니다."},
+{t:"그러나 이성이 이른 곳은 ‘무엇인가 계시다’까지입니다.",n:"그런데 이성이 이른 곳은, ‘무엇인가가 계시다’는 데까지입니다. 그분이 어떤 분인지는, 여전히 알 수 없습니다."},
+{t:"정작 알고 싶은 것은 이런 질문입니다.",n:"정작 우리가 알고 싶은 것은 이런 질문입니다. 그분은 나를 아실까? 나를 사랑하실까? 내 잘못을 용서하실 수 있을까? 이런 질문 앞에서 논증은 말이 없습니다."},
+{t:"유한한 것이 무한하신 분을 다 담을 수는 없습니다.",n:"컵으로 바닷물을 다 퍼 담을 수는 없습니다. 유한한 사람의 이성으로, 무한하신 하나님을 다 헤아릴 수는 없습니다."},
+{t:"하늘이 땅보다 높은 것처럼, 하나님의 생각은 사람의 생각보다 높습니다. (사 55장)",n:"성경은 말합니다. 하늘이 땅보다 높은 것처럼, 하나님의 생각은 사람의 생각보다 훨씬 높다고. 이성도 지음 받은 것이어서, 그 한계를 스스로 넘을 수는 없습니다."},
+{t:"사람을 알아 가는 일을 생각해 보세요.",n:"사람을 알아 가는 일을 생각해 보세요. 멀리서 지켜보고 짐작할 수는 있어도, 그 사람을 정말 알려면 그가 자기 자신을 말해 주어야 합니다."},
+{t:"하나님을 참되게 알려면, 그분이 먼저 자신을 알려 주셔야 합니다.",n:"하나님은 더욱 그렇습니다. 그러니 하나님을 참되게 알려면, 그분이 우리에게 맞추어, 스스로 자신을 알려 주셔야 합니다."},
+{t:"성경은 말합니다. 마음이 하나님에게서 돌아서 있기도 하다고.",n:"성경은 말합니다. 우리가 하나님을 잘 알지 못하는 것은, 머리가 부족해서만이 아니라, 우리 마음이 하나님에게서 돌아서 있기 때문이기도 하다고."},
+{t:"이성은 길을 가리키는 이정표입니다.",n:"그렇다고 이성이 쓸모없다는 뜻은 아닙니다. 이성은 길이 어느 쪽인지 가리켜 주는 이정표입니다. 다만, 이정표가 목적지는 아닙니다."},
+{t:"만일 그분이 먼저 자신을 알려 주신다면 어떨까요?",n:"만일 그분이 먼저, 자신을 우리에게 알려 주신다면 어떨까요?"}
+]};
+
+</script><script>
+(window.SC=window.SC||[])[4]={cuts:[
+{t:"하나님이 먼저 자신을 알려 주셨습니다.",n:"그런데, 하나님이 먼저 자신을 알려 주셨다면 어떨까요? 이것을, 계시라고 합니다.",big:1},
+{t:"계시는 ‘열어서 보여 준다’는 뜻입니다.",n:"계시라는 말은, 열어서 보여 준다는 뜻입니다. 가려져 있던 것을, 열어 드러내 주시는 일입니다."},
+{t:"사람이 올라가는 길이 아니라, 하나님이 내려오시는 길입니다.",n:"이것은 사람이 하나님께 올라가는 길이 아닙니다. 하나님이 사람에게 내려오시는 길입니다."},
+{t:"하나님은 우리의 눈높이에 맞추어 말씀하십니다.",n:"어른이 아기에게 말할 때는, 아기가 알아들을 수 있게 말을 낮춥니다. 하나님도 우리가 알아들을 수 있도록, 우리의 말과 방식으로 말씀해 주셨습니다."},
+{t:"별하늘과 양심은 이미 하나님이 걸어오신 말입니다.",n:"앞에서 본 별하늘과 우리 마음속 양심은, 하나님이 이미 우리에게 걸어오신 말의 흔적입니다."},
+{t:"그러나 그 소리는 멀리서 들려오는 메아리 같습니다.",n:"그러나 그 소리는 멀리서 들려오는 메아리 같아서, 그분이 누구신지, 나를 어떻게 하시려는지까지는 말해 주지 않습니다."},
+{t:"그래서 하나님은 분명한 말씀으로 직접 알려 주셨습니다.",n:"그래서 하나님은, 분명한 말씀으로 직접 자신을 알려 주셨습니다. 성경은 바로 그 말씀의 기록이라고 말합니다."},
+{t:"마침내 하나님은 한 분을 통해 자신을 가장 분명히 보이셨습니다.",n:"그리고 성경은 말합니다. 마침내 하나님은, 한 분을 통해 자신을 가장 분명히 보여 주셨다고."},
+{t:"이것은 우리가 얻어 낸 것이 아니라, 하나님이 먼저 베푸신 선물입니다.",n:"이 일은 우리가 올라가 얻어 낸 것이 아닙니다. 하나님이 먼저, 베풀어 주신 선물입니다."},
+{t:"하나님은 성경 속에서, 그리고 믿는 이들의 삶 속에서 어떻게 자신을 나타내셨을까요?",n:"그렇다면 하나님은, 성경 속에서 그리고 믿는 이들의 삶 속에서, 어떻게 자신을 나타내셨을까요? 이제 직접 살펴보겠습니다."}
+]};
+
+</script><script>
+(window.SC=window.SC||[])[5]={cuts:[
+{t:"성경은 하나님이 자신을 알려 주신 이야기입니다.",n:"성경은 예순여섯 권의 책으로 되어 있고, 마흔 명가량의 사람들이 천오백 년에 걸쳐 기록했습니다. 그런데 그 책들은 하나의 이야기로 이어져 있습니다."},
+{t:"하나님이 사람을 지으시고, 돌아선 사람을 끝까지 찾아오신 이야기입니다.",n:"하나님이 세상과 사람을 지으시고, 그분에게서 돌아선 사람을 끝까지 찾아오신 이야기입니다."},
+{t:"구약은 오실 분에 대한 약속을 쌓아 갑니다.",n:"구약은, 장차 오실 한 분에 대한 약속을 하나씩 쌓아 갑니다."},
+{t:"그 약속은 예수 그리스도 안에서 이루어졌습니다.",n:"마침내 그 약속은, 한 분 안에서 이루어졌다고 성경은 말합니다. 예수 그리스도입니다."},
+{t:"하나님을 직접 본 사람은 없지만, 아들이 그분을 알려 주셨습니다. (요 1:18)",n:"하나님을 직접 본 사람은 없지만, 아버지와 가장 가까우신 아들이 그분을 알려 주셨다고 성경은 말합니다."},
+{t:"정작 알고 싶던 질문에, 성경은 십자가로 답합니다. (롬 5:8)",n:"나를 아실까? 사랑하실까? 용서하실 수 있을까? 그 질문에 성경은 십자가로 답합니다. 우리가 아직 그분에게서 돌아서 있을 때, 그리스도가 우리를 위해 죽으심으로 하나님이 자신의 사랑을 보이셨다고 말합니다."},
+{t:"하나님은 책 속에만 계신 분이 아닙니다.",n:"그런데 하나님은, 멀리 책 속에만 계신 분이 아닙니다. 성경이 말하는 바로 그 하나님이, 우리의 삶의 자리에 직접 찾아오십니다."},
+{t:"하나님은 우리의 삶 속에서 스스로 자신을 증명해 보이십니다.",n:"하나님은 우리의 삶 속에 직접 들어오셔서, 자신이 살아 계심을 스스로 증명해 보이십니다. 우리를 개인적으로 아시고, 사랑하시며, 우리가 겪는 일에 개입하셔서, 그분이 살아 계신 분임을 보여 주십니다. 저도 그것을 경험한 사람입니다."},
+{t:"젊은 시절 부흥회에서 처음 들었습니다. 내가 찾기도 전에, 하나님이 먼저 나를 사랑하셨다고.",n:"젊은 시절 어느 부흥회에서, 저는 처음 들었습니다. 내가 찾기도 전에, 하나님이 먼저 나를 사랑하셨다고. 저는 믿음이란 내가 잘 보이려고 애쓰는 것인 줄 알았습니다. 그날 홀로 기도하는데, 그 사랑이 마음 깊이 와닿아 새벽부터 정오까지 눈물이 멈추지 않았습니다."},
+{t:"아내가 쓰러졌고, 의사는 사망했다고 말했습니다.",n:"어느 날 아내가 갑자기 쓰러져 숨을 쉴 수 없게 되었습니다. 큰 병원에 도착했을 때 심장은 이미 멈춰 있었고, 의사는 사망했다고 말했습니다. 그래도 저는, 아내를 그렇게 보낼 수 없었습니다."},
+{t:"나를 이토록 사랑하시는 하나님께, 아내를 살려 달라고 밤새 기도했습니다.",n:"그때 의무부대 대장이신 집사님이 부대 의사를 데리고 와서, 그 의사분이 구급차에 함께 타고 아내의 생명을 돌보며 서울의 병원까지 가 주셨습니다. 의사는 밤을 넘겨 봐야 안다고, 살아도 장애가 남을 수 있다고 했습니다. 저는 밤새 기도했습니다. 나를 이토록 사랑하시는 하나님께, 아내를 살려 달라고."},
+{t:"아내는 장애 없이 회복했고, 지금 제 곁에 있습니다.",n:"아내는 한쪽 폐를 잃었지만, 염려했던 뇌 손상이나 장애 없이 회복했습니다. 지금도 제 곁에서, 저를 돕는 든든한 동반자로 살아가고 있습니다."},
+{t:"성경에서 말씀하신 하나님이, 제 삶 속에서도 살아 계심을 보여 주셨습니다.",n:"성경에서 말씀하시는 하나님이, 제 삶 속에서도 살아 계심을 스스로 증명해 보이셨습니다. 이성의 길 끝에서 질문으로 남았던 분이, 내가 찾기도 전에 먼저 나를 찾아오셨습니다."},
+{t:"이 책이 정말 그러한지, 직접 열어 보고 싶지 않으십니까?",n:"이 책이 정말 그러한지, 직접 열어 보고 싶지 않으십니까?"}
+]};
+
+</script><script>
+(window.SC=window.SC||[])[6]={cuts:[
+{t:"이제는 성경이 직접 말하게 할 차례입니다.",n:"여기까지 함께 걸어오셨습니다. 이제는 제가 하는 말이 아니라, 성경이 직접 말하게 할 차례입니다."},
+{t:"처음부터 끝까지 읽지 않아도 됩니다.",n:"성경은 처음부터 끝까지 읽어야 한다고 생각하기 쉽지만, 처음 만나는 분께는 읽기 좋은 곳이 따로 있습니다."},
+{t:"마가복음부터 읽어 보세요.",n:"처음이시라면, 마가복음부터 읽어 보시기를 권합니다. 네 복음서 가운데 가장 짧고, 이야기가 빠르게 이어져서 예수 그리스도가 어떤 분이신지를 부담 없이 만날 수 있습니다."},
+{t:"하루에 한 장씩, 천천히.",n:"하루에 한 장씩, 천천히 읽어 보세요. 마가복음은 모두 열여섯 장이어서, 보름 남짓이면 끝까지 읽을 수 있습니다. 이해되지 않는 곳은 표시만 해 두셔도 좋습니다."},
+{t:"읽기 전에 이렇게 기도해 보세요. ‘하나님이 살아 계신다면, 저에게 알려 주십시오.’",n:"읽기 전에 이렇게 기도해 보셔도 좋습니다. 하나님이 살아 계신다면, 저에게 알려 주십시오."},
+{t:"궁금한 것은 언제든 물어보세요.",n:"읽다가 궁금한 것이 생기면, 언제든 물어보세요. 혼자 읽지 않으셔도 됩니다.",tel:"010-5840-9074"},
+{t:"하나님을 만난 사람들의 이야기를 더 들어 보세요.",n:"하나님이 자신을 나타내신 이야기가 더 있습니다. 궁금하시면, 더 들어 보세요.",more:1},
+{t:"하나님은 먼저 찾아오시는 분입니다. 이제 그분의 말씀에 귀를 기울여 보세요.",n:"하나님은 먼저 찾아오시는 분입니다. 이제, 그분의 말씀에 귀를 기울여 보시기 바랍니다.",big:1}
+]};
+
+</script><script>
+// 장면별·컷별 화면 연출 이름 (index.html의 FX 목록 중에서 고름)
+window.FXM=[
+["none","none","none","none","none","none","none","glow"],
+["constellation","gather","chain","book","split","dim","glow","beams4"],
+["beams4","glow","chain","chain","chain","burst","gather","glow","glow","glow","gear","gear","gear","constellation","constellation","glow","glow","book","glow","scale","scale","scale","scale","scale","glow","glow","glow","circle","circle","circle","circle","glow","gather"],
+["constellation","split","signpost","glow","cup","descend","glow","descend","dim","signpost","glow"],
+["glow","curtain","descend","descend","constellation","dim","book","book","glow","book"],
+["book","glow","split","glow","glow","cross","descend","glow","people","dim","people","people","people","book"],
+["book","book","book","calendar","glow","glow","glow","glow"]
+];
+
+</script>
+<script>
+// 장면 데이터: 컷은 문자열 또는 {t:글, big:1(큰 글씨), star:1(별 하나 밝게)}
+// dawn: 하늘의 밝기(0 밤 ~ 1 새벽). todo: 아직 채우지 않은 장면
+const DEF=[[0,'하나님은 과연 살아 계신가?'],[.03,'인간은 이성으로 하나님을 어떻게 생각해 왔는가?'],[.06,'네 가지 유신논증을 직접 살펴본다'],[.12,'인간 이성의 가능성과 한계'],[.4,'하나님께서 먼저 자신을 알리셨다'],[.65,'성경과 신자의 삶 속에서 자신을 나타내신 하나님'],[.9,'성경을 직접 알아보고 싶은 마음으로']];
+const SCN=window.SC||[];
+const S=DEF.map((d,n)=>SCN[n]?{dawn:d[0],cuts:SCN[n].cuts}:{dawn:d[0],todo:1,cuts:[{t:d[1],big:1}]});
+const items=[];
+S.forEach((sc,si)=>sc.cuts.forEach((c,ci)=>{c=typeof c==='string'?{t:c}:c;items.push({a:'audio/s'+(si+1)+'c'+(ci+1)+'.mp3',...c,si,ci,first:ci===0,todo:sc.todo,dawn:sc.dawn})}));
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let i=0,mode='auto',playing=true,timer=null,token=0,sound=true,voice=null;
+const syn=window.speechSynthesis;
+function pickVoice(){if(!syn)return;const v=syn.getVoices().filter(x=>/^ko/i.test(x.lang));
+  voice=v.find(x=>/Natural|Online|SunHi|InJoon/i.test(x.name))||v.find(x=>/Google|Yuna/i.test(x.name))||v[0]||null}
+if(syn){pickVoice();syn.onvoiceschanged=pickVoice}
+const GAP=80; // 컷 사이 쉬는 시간(ms). 0으로 하면 바로 이어짐
+const au=new Audio(),pre=new Audio();
+function prime(){
+  au.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';au.play().catch(()=>{});
+  if(syn){const p=new SpeechSynthesisUtterance(' ');p.volume=0;syn.speak(p)}
+}
+let cutT0=0;
+const readMs=it=>2000+shown(it).length*140; // 글을 읽는 데 필요한 최소 시간
+function fin(my){
+  if(my!==token)return;
+  clearTimeout(timer);
+  if(mode==='auto'&&playing){
+    const wait=Math.max(GAP,readMs(items[i])-(performance.now()-cutT0));
+    if(i>=items.length-1){playing=false;btn()}
+    else timer=setTimeout(()=>{if(my===token)go(i+1)},wait);
+  }
+}
+function stopVoice(){au.onended=null;au.onerror=null;au.pause();if(syn&&(syn.speaking||syn.pending))syn.cancel()}
+// mp3가 있으면 mp3를, 없으면 브라우저 음성으로 대신 읽음
+function narrate(it,my){
+  if(!sound)return;
+  stopVoice();
+  let fb=false;const fall=()=>{if(fb)return;fb=true;speak(it.n||it.t,my)};
+  au.onended=()=>fin(my);
+  au.onerror=fall;
+  au.src=it.a;
+  au.play().catch(fall);
+  const nx=items[i+1];if(nx){pre.preload='auto';pre.src=nx.a}
+}
+function speak(text,my){
+  if(my!==token||!sound)return;
+  if(!syn){fin(my);return}
+  // 읽는 중이 아닐 때는 취소하지 않고 바로 읽음(취소 직후 바로 읽으면 브라우저가 무시하는 문제를 피함)
+  const busy=syn.speaking||syn.pending;
+  if(busy)syn.cancel();
+  const run=()=>{
+    if(my!==token)return;
+    const parts=text.split(/(?<=[.?!])\s+/).filter(Boolean);
+    parts.forEach((q,n)=>{
+      const u=new SpeechSynthesisUtterance(q);u.lang='ko-KR';u.rate=.9;if(voice)u.voice=voice;
+      if(n===parts.length-1){u.onend=()=>fin(my);u.onerror=()=>fin(my)}
+      syn.speak(u);
+    });
+  };
+  busy?setTimeout(run,90):run();
+}
+
+// 장면 이동 버튼
+S.forEach((_,n)=>{const b=document.createElement('button');b.textContent=n+1;b.setAttribute('aria-label',(n+1)+'장면');b.onclick=()=>go(items.findIndex(x=>x.si===n));$('dots').appendChild(b)});
+
+function shown(it){let x=it.n||it.t;const m=(it.t||'').match(/\(([^)]*)\)\s*$/);if(m&&x.indexOf(m[1])<0)x+=' ('+m[1]+')';return x}
+function render(){
+  const it=items[i],t=$('txt'),my=++token;cutT0=performance.now();
+  t.classList.remove('on');
+  setTimeout(()=>{
+    if(my!==token)return;
+    t.textContent=shown(it);
+    t.classList.toggle('big',!!it.big);
+    if(it.todo){const s=document.createElement('small');s.textContent='이 장면은 다음 단계에서 채웁니다';t.appendChild(s)}
+    if(it.tel){const a=document.createElement('a');a.href='tel:'+it.tel.replace(/-/g,'');a.textContent=it.tel;a.className='lk';a.onclick=e=>e.stopPropagation();t.appendChild(a)}
+    if(it.more){const b=document.createElement('button');b.textContent='더 많은 이야기';b.className='lk';b.onclick=e=>{e.stopPropagation();openMore()};t.appendChild(b)}
+    t.classList.add('on');
+  },reduce?0:140);
+  narrate(it,my);
+  dT=it.dawn;sT=it.star?1:0;
+  fxN=(window.FXM&&FXM[it.si]&&FXM[it.si][it.ci])||'none';fxT=performance.now()+100;fxInk=it.dawn>=.5?'90,60,30':'246,231,180';document.documentElement.style.setProperty('--tp',it.dawn>=.5?'rgba(255,255,255,.6)':'rgba(10,14,36,.5)');
+  document.documentElement.style.setProperty('--ink',it.dawn>=.5?'#2b2540':'#f6e7b4');
+  document.documentElement.style.setProperty('--panel',it.dawn>=.5?'rgba(255,255,255,.5)':'rgba(15,20,48,.55)');
+  [...$('dots').children].forEach((d,n)=>d.classList.toggle('cur',n===it.si));
+  btn();
+}
+function openMore(){stopVoice();token++;clearTimeout(timer);playing=false;btn();const L=window.STORIES||[{h:'준비 중입니다',p:''}];$('mbox').innerHTML='';L.forEach(x=>{const h=document.createElement('h2'),p=document.createElement('p');h.textContent=x.h;p.textContent=x.p;$('mbox').append(h,p)});$('more').hidden=false}
+function btn(){$('play').textContent=playing?'멈춤':(i===items.length-1?'처음부터':'재생')}
+function schedule(){
+  clearTimeout(timer);
+  if(mode!=='auto'||!playing)return;
+  const L=(items[i].n||items[i].t).length,spoken=sound;
+  if(i>=items.length-1){if(!spoken){playing=false;btn()}return}
+  timer=setTimeout(()=>go(i+1),spoken?60000:readMs(items[i]));
+}
+function go(n){i=Math.max(0,Math.min(items.length-1,n));render();schedule()}
+function begin(m){prime();mode=m;playing=m==='auto';$('start').classList.add('hide');$('ui').hidden=false;syncMode();go(0)}
+function syncMode(){$('mode').textContent=mode==='auto'?'직접 넘기기':'자동 재생';$('play').hidden=mode!=='auto'}
+$('bAuto').onclick=()=>begin('auto');
+$('bMan').onclick=()=>begin('manual');
+$('prev').onclick=()=>go(i-1);
+$('next').onclick=()=>go(i+1);
+$('play').onclick=()=>{if(!playing){playing=true;go(i>=items.length-1?0:i);return}playing=false;token++;clearTimeout(timer);stopVoice();btn()};
+$('mode').onclick=()=>{mode=mode==='auto'?'manual':'auto';playing=mode==='auto';syncMode();go(i)};
+$('cap').onclick=()=>{document.body.classList.toggle('nosub');$('cap').textContent=document.body.classList.contains('nosub')?'자막 켜기':'자막 끄기'};
+$('mclose').onclick=()=>{$('more').hidden=true};
+$('snd').onclick=()=>{sound=!sound;$('snd').textContent=sound?'소리 끄기':'소리 켜기';if(!sound)stopVoice();go(i)};
+$('stage').onclick=()=>{if(mode==='manual')go(i+1)};
+addEventListener('keydown',e=>{
+  if($('start').classList.contains('hide')===false)return;
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(i+1)}
+  if(e.key==='ArrowLeft')go(i-1);
+});
+
+// 별하늘
+const cv=$('sky'),cx=cv.getContext('2d');
+let W,H,stars=[],dawn=0,dT=0,star=0,sT=0,fxN='none',fxT=0,fxInk='246,231,180';
+function size(){const r=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*r;cv.height=H*r;cx.setTransform(r,0,0,r,0,0);
+  stars=Array.from({length:Math.round(W*H/7000)},()=>({x:Math.random()*W,y:Math.random()*H*.85,r:Math.random()*1.4+.3,p:Math.random()*6.28}))}
+addEventListener('resize',size);size();
+const mix=(a,b,t)=>a.map((v,k)=>Math.round(v+(b[k]-v)*t));
+const P=(t,a,b)=>Math.max(0,Math.min(1,(t-a)/(b-a)));
+const S_=(c,k,a)=>{c.strokeStyle=`rgba(${k},${a})`;c.fillStyle=`rgba(${k},${a})`};
+const dot=(c,x,y,r)=>{c.beginPath();c.arc(x,y,Math.max(r,0),0,6.283);c.fill()};
+const ln=(c,a,b,d,e)=>{c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.stroke()};
+const FX={
+glow:(c,x,y,t,u,k)=>{const r=u*(1+3*P(t,0,3));const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${k},.35)`);g.addColorStop(1,`rgba(${k},0)`);c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,6.283);c.fill()},
+constellation:(c,x,y,t,u,k)=>{const p=[[-4,1],[-2,-1],[0,.6],[2,-1.2],[4,.8]];S_(c,k,.85);p.forEach((q,i)=>{const a=P(t,i*.5,i*.5+.4);dot(c,x+q[0]*u,y+q[1]*u,u*.12*a);if(i){const o=p[i-1];ln(c,x+o[0]*u,y+o[1]*u,x+(o[0]+(q[0]-o[0])*a)*u,y+(o[1]+(q[1]-o[1])*a)*u)}})},
+gather:(c,x,y,t,u,k)=>{S_(c,k,.85);const m=1-P(t,0,3);for(let i=0;i<18;i++){const a=i*2.4,r=(1.2+(i%5))*u*m;dot(c,x+Math.cos(a)*r*1.4,y+Math.sin(a)*r*.7,u*.1+.5)}dot(c,x,y,u*.18)},
+burst:(c,x,y,t,u,k)=>{S_(c,k,.85);const m=P(t,0,3);for(let i=0;i<24;i++){const a=i*2.4,r=(1.2+(i%5))*u*m;dot(c,x+Math.cos(a)*r*1.4,y+Math.sin(a)*r*.7,u*.1+.5)}dot(c,x,y,u*.18)},
+chain:(c,x,y,t,u,k)=>{for(let i=0;i<7;i++){const a=P(t,i*.45,i*.45+.4);S_(c,k,.9*a);dot(c,x+(i-3)*u*1.5,y,u*.28*a);if(i)ln(c,x+(i-4)*u*1.5,y,x+(i-3)*u*1.5,y)}const f=P(t,3.2,4.2);S_(c,k,.85*f);dot(c,x-4.5*u,y,u*.6*f)},
+split:(c,x,y,t,u,k)=>{S_(c,k,.9);const a=P(t,0,1.2),b=P(t,1.2,2.6);ln(c,x-4*u,y,x-4*u+4*u*a,y);ln(c,x,y,x+4*u*b,y-2*u*b);ln(c,x,y,x+4*u*b,y+2*u*b)},
+dim:(c,x,y,t,u,k)=>{c.fillStyle=`rgba(0,0,0,${.35*P(t,0,1.5)})`;c.fillRect(0,0,9999,9999)},
+beams4:(c,x,y,t,u,k)=>{for(let i=0;i<4;i++){const a=P(t,i*.5,i*.5+.6);S_(c,k,.85*a);c.lineWidth=u*.25;ln(c,x+(i-1.5)*u*1.6,y-u*2.5,x+(i-1.5)*u*1.6,y-u*2.5+u*5*a)}},
+gear:(c,x,y,t,u,k)=>{S_(c,k,.85);[[-1.2,1,12,1],[.9,.7,9,-1.4]].forEach(([dx,r,n,s])=>{c.beginPath();for(let i=0;i<=n*2;i++){const a=i*Math.PI/n+t*.6*s,rr=u*r*1.3*(i%2?1:1.18);c.lineTo(x+dx*u*1.6+Math.cos(a)*rr,y+Math.sin(a)*rr)}c.closePath();c.stroke()})},
+scale:(c,x,y,t,u,k)=>{S_(c,k,.9);const a=Math.sin(t*1.4)*.3*Math.exp(-t*.4),dx=Math.cos(a)*3*u,dy=Math.sin(a)*3*u;ln(c,x,y-2*u,x,y+2*u);ln(c,x-dx,y-dy,x+dx,y+dy);ln(c,x-1.5*u,y+2*u,x+1.5*u,y+2*u);dot(c,x-dx,y-dy+u*.8,u*.45);dot(c,x+dx,y+dy+u*.8,u*.45)},
+circle:(c,x,y,t,u,k)=>{S_(c,k,.9);const r=u*(1+2.5*P(t,0,3));c.beginPath();c.setLineDash(t<3.5?[8,8]:[]);c.arc(x,y,r,0,6.283);c.stroke();c.setLineDash([])},
+curtain:(c,x,y,t,u,k)=>{const o=P(t,0,2.5);const g=c.createLinearGradient(x-u,0,x+u,0);g.addColorStop(0,`rgba(${k},0)`);g.addColorStop(.5,`rgba(${k},${.45*o})`);g.addColorStop(1,`rgba(${k},0)`);c.fillStyle=g;c.fillRect(x-2*u,y-3*u,4*u,6*u);c.fillStyle='rgba(15,20,48,.85)';c.fillRect(x-4*u-o*3*u,y-3*u,4*u,6*u);c.fillRect(x+o*3*u,y-3*u,4*u,6*u)},
+descend:(c,x,y,t,u,k)=>{const a=P(t,0,2.5);const g=c.createLinearGradient(0,y-4*u,0,y+u);g.addColorStop(0,`rgba(${k},0)`);g.addColorStop(1,`rgba(${k},.85)`);c.fillStyle=g;c.fillRect(x-u*.3,y-4*u,u*.6,5*u*a);S_(c,k,.6);dot(c,x,y+u*1.2,u*.25)},
+book:(c,x,y,t,u,k)=>{const a=P(t,0,1.5);S_(c,k,.9);[-1,1].forEach(s=>{c.beginPath();c.moveTo(x,y+u);c.lineTo(x+s*3.2*u*a,y+u*.6);c.lineTo(x+s*3.2*u*a,y-u*1.4);c.lineTo(x,y-u*.8);c.closePath();c.stroke()});const g=c.createRadialGradient(x,y-u,0,x,y-u,u*4*P(t,.8,3)+1);g.addColorStop(0,`rgba(${k},.4)`);g.addColorStop(1,`rgba(${k},0)`);c.fillStyle=g;c.fillRect(x-4*u,y-5*u,8*u,5*u)},
+cup:(c,x,y,t,u,k)=>{S_(c,k,.85);c.beginPath();for(let i=-60;i<=60;i++){const X=x+i*u*.1,Y=y+u*.8+Math.sin(i*.25+t*2)*u*.15;i>-60?c.lineTo(X,Y):c.moveTo(X,Y)}c.stroke();const d=u*1.6*P(t,1,2.5);c.beginPath();c.arc(x-2*u,y-u*.8+d,u*.5,0,Math.PI);c.stroke()},
+signpost:(c,x,y,t,u,k)=>{S_(c,k,.9);const a=P(t,0,1.5);ln(c,x,y+2*u,x,y+2*u-4*u*a);c.beginPath();c.moveTo(x,y-u*1.5);c.lineTo(x+3*u*a,y-u*1.5);c.lineTo(x+3.6*u*a,y-u*.9);c.lineTo(x+3*u*a,y-u*.3);c.lineTo(x,y-u*.3);c.stroke()},
+calendar:(c,x,y,t,u,k)=>{for(let i=0;i<14;i++){const a=P(t,i*.3,i*.3+.3);S_(c,k,.85);const X=x+((i%7)-3)*u*1.1,Y=y+(Math.floor(i/7)-.5)*u*1.1;c.strokeRect(X-u*.4,Y-u*.4,u*.8,u*.8);c.globalAlpha=a;c.fillRect(X-u*.4,Y-u*.4,u*.8,u*.8);c.globalAlpha=1}}
+};
+FX.people=(c,x,y,t,u,k)=>{const a=P(t,0,1.5);const g=c.createLinearGradient(0,y-4*u,0,y+u);g.addColorStop(0,`rgba(${k},0)`);g.addColorStop(1,`rgba(${k},${.5*P(t,1,3)})`);c.fillStyle=g;c.fillRect(x-4*u,y-4*u,8*u,5*u);S_(c,k,.9*a);for(let i=-2;i<=2;i++){const X=x+i*u*1.5,Y=y+u*1.5;dot(c,X,Y-u*1.1,u*.3);c.beginPath();c.moveTo(X-u*.45,Y+u*1.2);c.lineTo(X-u*.3,Y-u*.7);c.lineTo(X+u*.3,Y-u*.7);c.lineTo(X+u*.45,Y+u*1.2);c.closePath();c.fill()}};
+FX.cross=(c,x,y,t,u,k)=>{const a=P(t,0,1.5),r=u*(2+2*P(t,0,3));const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${k},${.5*a})`);g.addColorStop(1,`rgba(${k},0)`);c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,6.283);c.fill();S_(c,k,.95*a);c.fillRect(x-u*.18,y-u*2.2,u*.36,u*4.4);c.fillRect(x-u*1.3,y-u,u*2.6,u*.36)};
+function frame(ts){
+  dawn+=(dT-dawn)*.02;star+=(sT-star)*.03;
+  const top=mix([15,20,48],[118,142,196],dawn),bot=mix([28,35,80],[247,222,172],dawn);
+  const g=cx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,`rgb(${top})`);g.addColorStop(1,`rgb(${bot})`);
+  cx.fillStyle=g;cx.fillRect(0,0,W,H);
+  const fade=1-dawn*.95;
+  for(const s of stars){
+    const tw=reduce?1:.5+.5*Math.sin(ts*.0015+s.p);
+    cx.globalAlpha=(.3+.7*tw)*fade;cx.fillStyle='#fff6d6';
+    cx.beginPath();cx.arc(s.x,s.y,s.r,0,6.283);cx.fill();
+  }
+  const ez=dawn*dawn*(3-2*dawn),sy=H*(1.0-.4*ez),sr=Math.min(W,H)*.09;
+  if(dawn>.1){const al=Math.min(1,(dawn-.1)*1.6);const g2=cx.createRadialGradient(W*.5,sy,0,W*.5,sy,sr*3.4);g2.addColorStop(0,`rgba(255,236,170,${.9*al})`);g2.addColorStop(.3,`rgba(255,200,120,${.45*al})`);g2.addColorStop(1,'rgba(255,200,120,0)');cx.fillStyle=g2;cx.fillRect(0,0,W,H);cx.fillStyle=`rgba(255,244,205,${al})`;cx.beginPath();cx.arc(W*.5,sy,sr,0,6.283);cx.fill()}
+  [[.84,mix([18,24,52],[140,104,78],dawn),.0035,1.1],[.9,mix([10,14,32],[92,70,60],dawn),.005,2.3]].forEach(([bs,col,f,ph])=>{cx.fillStyle=`rgb(${col})`;cx.beginPath();cx.moveTo(0,H);for(let x=0;x<=W;x+=12)cx.lineTo(x,H*bs+Math.sin(x*f+ph)*H*.03+Math.sin(x*f*2.3)*H*.012);cx.lineTo(W,H);cx.fill()});
+  {const px=W*.16,py=H*.9+Math.sin(px*.005+2.3)*H*.03+Math.sin(px*.005*2.3)*H*.012,hh=H*.085;cx.fillStyle=`rgb(${mix([4,6,16],[48,34,28],dawn)})`;cx.beginPath();cx.arc(px,py-hh*.92,hh*.12,0,6.283);cx.fill();cx.beginPath();cx.moveTo(px-hh*.16,py+2);cx.lineTo(px-hh*.09,py-hh*.78);cx.lineTo(px+hh*.09,py-hh*.78);cx.lineTo(px+hh*.16,py+2);cx.closePath();cx.fill()}
+  if(star>.01){
+    const x=W/2,y=H*.55,pulse=reduce?0:Math.sin(ts*.002)*.1;
+    const rad=24+70*star;
+    const rg=cx.createRadialGradient(x,y,0,x,y,rad);
+    rg.addColorStop(0,'rgba(255,244,200,'+(.9*star)+')');rg.addColorStop(1,'rgba(255,244,200,0)');
+    cx.globalAlpha=1;cx.fillStyle=rg;cx.beginPath();cx.arc(x,y,rad*(1+pulse),0,6.283);cx.fill();
+    cx.fillStyle='#fffbe8';cx.globalAlpha=star;cx.beginPath();cx.arc(x,y,3.2,0,6.283);cx.fill();
+  }
+  cx.globalAlpha=1;
+  const ft=(ts-fxT)/1000;if(ft>0&&FX[fxN]){cx.save();cx.lineWidth=3.5;cx.lineCap='round';FX[fxN](cx,W/2,H*.6,ft,Math.min(W,H*1.2)/10,fxInk);cx.restore()}
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
