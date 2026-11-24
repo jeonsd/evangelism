@@ -45,7 +45,8 @@ a.lk{text-decoration:underline}
 #stage{align-items:flex-start;padding:6vh 5vw 24vh}
 #txt{margin:0 auto;max-width:22em;font-size:clamp(21px,4.2vw,38px);line-height:1.6;background:var(--tp);padding:.55em .9em;border-radius:20px;backdrop-filter:blur(3px)}
 #txt.big{font-size:clamp(26px,5.4vw,48px)}
-.nosub #txt{opacity:0!important}
+.nosub #txt .tx{display:none}
+.nosub #txt:not(.haslk){opacity:0!important}
 </style>
 </head>
 <body>
@@ -108,7 +109,7 @@ a.lk{text-decoration:underline}
 {t:"길에서 시계 하나를 주웠다고 해 봅시다.",n:"길을 걷다가 시계 하나를 주웠다고 해 봅시다. 톱니바퀴들이 정확하게 맞물려 시간을 알려 줍니다."},
 {t:"그 시계가 저절로 생겼다고 생각하는 사람은 없습니다.",n:"그 시계가 우연히 저절로 생겼다고 생각하는 사람은 없을 것입니다. 우리는 자연스럽게, 만든 사람이 있다고 생각합니다."},
 {t:"그런데 자연은 시계보다 훨씬 정교합니다.",n:"그런데 자연은 시계보다 훨씬 더 정교합니다. 눈은 빛을 받아 세상을 보게 하고, 몸의 세포 하나에는 엄청난 정보가 담겨 있습니다."},
-{t:"우주의 법칙도 놀랍도록 정밀하게 맞추어져 있습니다.",n:"우주의 법칙도 놀랍도록 정밀하게 맞추어져 있습니다. 중력이나 빛의 속도 같은 값이 조금만 달랐어도 별도 생명도 생기지 못했을 것이라고 말하는 과학자들이 있습니다."},
+{t:"우주의 법칙도 놀랍도록 정밀하게 맞추어져 있습니다.",n:"우주의 법칙도 놀랍도록 정밀하게 맞추어져 있습니다. 중력이나 핵력의 세기 같은 값이 조금만 달랐어도 별도 생명도 생기지 못했을 것이라고 말하는 과학자들이 있습니다."},
 {t:"질서와 목적이 보이는 곳에는 설계한 분이 있다고 보는 것이 자연스럽습니다.",n:"이렇게 질서와 목적이 보이는 곳에는, 설계한 분이 계시다고 보는 것이 가장 자연스러운 생각입니다."},
 {t:"자연의 법칙만으로 설명할 수 있다고 하는 분도 있습니다.",n:"물론 자연의 법칙만으로 설명할 수 있다고 하는 분도 있습니다. 그러나 그 법칙이 왜 그렇게 정밀한지는, 여전히 남는 질문입니다."},
 {t:"이 길은 설계한 분이 계시다는 데까지 우리를 데려다 줍니다.",n:"이 길은 우리를, 설계한 분이 계시다는 데까지 데려다 줍니다. 그분이 어떤 분인지는, 아직 알 수 없습니다."},
@@ -188,7 +189,6 @@ a.lk{text-decoration:underline}
 {t:"하루에 한 장씩, 천천히.",n:"하루에 한 장씩, 천천히 읽어 보세요. 마가복음은 모두 열여섯 장이어서, 보름 남짓이면 끝까지 읽을 수 있습니다. 이해되지 않는 곳은 표시만 해 두셔도 좋습니다."},
 {t:"읽기 전에 이렇게 기도해 보세요. ‘하나님이 살아 계신다면, 저에게 알려 주십시오.’",n:"읽기 전에 이렇게 기도해 보셔도 좋습니다. 하나님이 살아 계신다면, 저에게 알려 주십시오."},
 {t:"궁금한 것은 언제든 물어보세요.",n:"읽다가 궁금한 것이 생기면, 언제든 물어보세요. 혼자 읽지 않으셔도 됩니다.",tel:"010-5840-9074"},
-{t:"하나님을 만난 사람들의 이야기를 더 들어 보세요.",n:"하나님이 자신을 나타내신 이야기가 더 있습니다. 궁금하시면, 더 들어 보세요.",more:1},
 {t:"하나님은 먼저 찾아오시는 분입니다. 이제 그분의 말씀에 귀를 기울여 보세요.",n:"하나님은 먼저 찾아오시는 분입니다. 이제, 그분의 말씀에 귀를 기울여 보시기 바랍니다.",big:1}
 ]};
 
@@ -201,7 +201,7 @@ window.FXM=[
 ["constellation","split","signpost","glow","cup","descend","glow","descend","dim","signpost","glow"],
 ["glow","curtain","descend","descend","constellation","dim","book","book","glow","book"],
 ["book","glow","split","glow","glow","cross","descend","glow","descend","dim","dim","people","chain","descend","glow","people","book"],
-["book","book","book","calendar","glow","glow","glow","glow"]
+["book","book","book","calendar","glow","glow","glow"]
 ];
 
 </script>
@@ -276,7 +276,7 @@ function render(){
   t.classList.remove('on');
   setTimeout(()=>{
     if(my!==token)return;
-    t.textContent=shown(it);
+    t.textContent='';const tx=document.createElement('span');tx.className='tx';tx.textContent=shown(it);t.appendChild(tx);t.classList.toggle('haslk',!!(it.tel||it.more));
     t.classList.toggle('big',!!it.big);
     if(it.todo){const s=document.createElement('small');s.textContent='이 장면은 다음 단계에서 채웁니다';t.appendChild(s)}
     if(it.tel){const a=document.createElement('a');a.href='tel:'+it.tel.replace(/-/g,'');a.textContent=it.tel;a.className='lk';a.onclick=e=>e.stopPropagation();t.appendChild(a)}
@@ -311,7 +311,8 @@ $('play').onclick=()=>{if(!playing){playing=true;go(i>=items.length-1?0:i);retur
 $('mode').onclick=()=>{mode=mode==='auto'?'manual':'auto';playing=mode==='auto';syncMode();go(i)};
 $('cap').onclick=()=>{document.body.classList.toggle('nosub');$('cap').textContent=document.body.classList.contains('nosub')?'자막 켜기':'자막 끄기'};
 $('mclose').onclick=()=>{$('more').hidden=true};
-$('snd').onclick=()=>{sound=!sound;$('snd').textContent=sound?'소리 끄기':'소리 켜기';if(!sound)stopVoice();go(i)};
+function syncCap(){const c=$('cap');if(!sound){document.body.classList.remove('nosub');c.textContent='자막 끄기';c.style.display='none'}else c.style.display=''}
+$('snd').onclick=()=>{sound=!sound;$('snd').textContent=sound?'소리 끄기':'소리 켜기';if(!sound)stopVoice();syncCap();go(i)};
 $('stage').onclick=()=>{if(mode==='manual')go(i+1)};
 addEventListener('keydown',e=>{
   if($('start').classList.contains('hide')===false)return;
